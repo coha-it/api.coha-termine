@@ -16,3 +16,6 @@
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
+
+$router->post('upload', 'EventsController@uploadFile');
+$router->get('events', 'EventsController@getEvents');
