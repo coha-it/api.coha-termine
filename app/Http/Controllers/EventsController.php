@@ -46,7 +46,7 @@ class EventsController extends Controller
     */
     public function checkPin($request) {
         $pin = env('PIN_HASH', false);
-        return $pin && md5($request->pin) === $pin;
+        return $pin && md5($request->pin) === md5($pin);
     }
 
     /**
