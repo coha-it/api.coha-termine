@@ -62,23 +62,32 @@ class EventsController extends Controller
             return response('wrong_pin', 401);
         }
 
-        // if ($request->type(''))
+        // Filetype
+        switch ($request->input('type')) {
+            case 'xml':
+                // Upload the file
+                $request->file('file')->move($this->dir, $this->xml);
 
-        // Upload the file
-        $request->file('file')->move($this->dir, $this->xml);
+                // Generate Array / Json and put file contents
+                $events = $this->generateEvents();
 
-        // Generate Array / Json and put file contents
-        $events = $this->generateEvents();
+                // Check if Events-array is correct
+                if(!$events) {
+                    return response('no_events', 401);
+                } else if (count($events) <= 3) {
+                    return response('not_enought_events', 401);
+                } else {
+                    file_put_contents($this->jsonFullPath, json_encode($events));
+                    return response('file_uploaded');
+                }
+                break;
 
-        // Check if Events-array is correct
-        if(!$events) {
-            return response('no_events', 401);
-        } else if (count($events) <= 3) {
-            return response('not_enought_events', 401);
-        } else {
-            file_put_contents($this->jsonFullPath, json_encode($events));
-            return response('file_uploaded');
+            case 'csv':
+                # code...
+                break;
         }
+
+
     }
     
     /**
