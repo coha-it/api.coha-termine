@@ -14,13 +14,19 @@ class CorsMiddleware
   */
   public function handle($request, Closure $next)
   {
-    $headers = [
-      'Access-Control-Allow-Origin'      => env('CORS_ORIGIN'),
-      'Access-Control-Allow-Methods'     => 'POST, GET, OPTIONS, PUT, DELETE',
-      'Access-Control-Allow-Credentials' => 'true',
-      'Access-Control-Max-Age'           => '86400',
-      'Access-Control-Allow-Headers'     => 'Content-Type, Authorization, X-Requested-With'
-    ];
+
+    $allowedDomains = explode(' ', env('CORS_ORIGINS', []));
+    $userOrigin = $request->headers->get('origin');
+
+    if( in_array($userOrigin, $allowedDomains)) {
+      $headers = [
+        'Access-Control-Allow-Origin'      => $userOrigin,
+        'Access-Control-Allow-Methods'     => 'POST, GET, OPTIONS, PUT, DELETE',
+        'Access-Control-Allow-Credentials' => 'true',
+        'Access-Control-Max-Age'           => '86400',
+        'Access-Control-Allow-Headers'     => 'Content-Type, Authorization, X-Requested-With'
+      ];
+    }
     
     if ($request->isMethod('OPTIONS'))
     {

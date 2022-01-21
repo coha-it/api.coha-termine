@@ -50,7 +50,7 @@ class EventsController extends Controller
     }
 
     /**
-    * Store a new user.
+    * Upload CSV or XML File
     *
     * @param  Request  $request
     * @return Response
@@ -61,6 +61,8 @@ class EventsController extends Controller
         if ( !$this->checkPin($request) ) {
             return response('wrong_pin', 401);
         }
+
+        // if ($request->type(''))
 
         // Upload the file
         $request->file('file')->move($this->dir, $this->xml);
