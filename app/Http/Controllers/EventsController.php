@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 class EventsController extends Controller
 {
     protected $dir;
+    protected $csv = 'calendar.csv';
+    protected $csvFullPath;
     protected $xml = 'events.xml';
     protected $xmlFullPath;
     protected $json = 'events.json';
@@ -23,8 +25,9 @@ class EventsController extends Controller
         $s = DIRECTORY_SEPARATOR;
 
         $this->dir = storage_path('events');
-        $this->xmlFullPath = $this->dir . $s . $this->xml;
-        $this->jsonFullPath = $this->dir . $s . $this->json;
+        $this->xmlFullPath = "{$this->dir}{$s}{$this->xml}";
+        $this->csvFullPath = "{$this->dir}{$s}{$this->csv}";
+        $this->jsonFullPath = "{$this->dir}{$s}{$this->json}";
     }
     
     /**
@@ -45,8 +48,15 @@ class EventsController extends Controller
     * @return Boolean
     */
     public function checkPin($request) {
-        $pin = env('PIN_HASH', false);
-        return $pin && md5($request->pin) === md5($pin);
+        // If Test/Dev Mode:
+        if(in_array(env('APP_ENV', 'production'), ['local', 'development'])) {
+            return true;
+        }
+        // If Production-Mode:
+        else {
+            $pin = env('PIN_HASH', false);
+            return $pin && md5($request->pin) === md5($pin);
+        }
     }
 
     /**
@@ -69,7 +79,7 @@ class EventsController extends Controller
                 $request->file('file')->move($this->dir, $this->xml);
 
                 // Generate Array / Json and put file contents
-                $events = $this->generateEvents();
+                $events = $this->generateXmlEvents();
 
                 // Check if Events-array is correct
                 if(!$events) {
@@ -83,7 +93,11 @@ class EventsController extends Controller
                 break;
 
             case 'csv':
-                # code...
+                // Upload the file
+                $request->file('file')->move($this->dir, $this->csv);
+
+                // Generate Array / Json and put file contents
+                return "jo";
                 break;
         }
 
@@ -95,7 +109,7 @@ class EventsController extends Controller
     *
     * @return Array
     */
-    public function generateEvents() {
+    public function generateXmlEvents() {
         $events = $this->array_from_worksheet_table($this->xmlFullPath, 'events');
         $events = array_values($events); // Array to Value-Array
         array_shift($events); // Remove first row (only descriptions)
