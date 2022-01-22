@@ -8,10 +8,16 @@ use Illuminate\Support\Facades\Storage;
 class EventsController extends Controller
 {
     protected $dir;
+
+    // CSV
     protected $csv = 'calendar.csv';
     protected $csvFullPath;
+
+    // XML
     protected $xml = 'events.xml';
     protected $xmlFullPath;
+
+    // JSON
     protected $json = 'events.json';
     protected $jsonFullPath;
 
@@ -37,7 +43,6 @@ class EventsController extends Controller
     */
     public function getEvents() {
         $json = file_get_contents($this->jsonFullPath);
-
         return response($json)->header('Content-Type', 'application/json');
     }
 
@@ -85,7 +90,7 @@ class EventsController extends Controller
                 if(!$events) {
                     return response('no_events', 401);
                 } else if (count($events) <= 3) {
-                    return response('not_enought_events', 401);
+                    return response('not_enough_events', 401);
                 } else {
                     file_put_contents($this->jsonFullPath, json_encode($events));
                     return response('file_uploaded');
@@ -96,12 +101,74 @@ class EventsController extends Controller
                 // Upload the file
                 $request->file('file')->move($this->dir, $this->csv);
 
+                $events = $this->csv_to_multidimension_array($this->csvFullPath);
+
+                if(!$events) {
+                    return response('no_events', 401);
+                } else if (count($events) <= 3) {
+                    return response('not_enough_events', 401);
+                } else {
+                    file_put_contents($this->jsonFullPath, json_encode($events));
+                    return response('file_uploaded');
+                }
+
                 // Generate Array / Json and put file contents
-                return "jo";
                 break;
         }
+    }
+
+    /**
+     * Converts CSV to multi dimensional array
+     */
+    function csv_to_multidimension_array($filename)
+    {
+        $aJson = [];
+        $aHeader = [];
+        $oFile = fopen($filename, 'r');
+
+        while (($array = fgetcsv($oFile)) !== FALSE) {
+            if($aHeader) {
+                $aLine = [];
+                foreach ($aHeader as $i => $val) {
+                    $aLine[$val] = $array[$i];
+                }
+
+                if (!in_array(strtolower($aLine['Privat']), explode(' ', 'ein on true wahr an ja'))) {
+                    array_push($aJson, $aLine);
+                }
+            } else {
+                $aHeader = $this->removeSpecialCharsFromArray($array);
+            }
+        };
+
+        return $aJson;
+    }
+
+    /**
+    * Remove any special Characters from Array
+    *
+    * @param Array $aOrig
+    * @return Array
+    */
+    function removeSpecialCharsFromArray($aOrig) {
+        $aNew = [];
+        foreach ($aOrig as $key => $value) {
+            $aNew[$key] = $this->removeSpecialChars($value);
+        }
+        return $aNew;
+    }
 
 
+    /**
+    * Remove any special Characters
+    *
+    * @param String $sOrig
+    * @return String
+    */
+    function removeSpecialChars($sText) {
+        // $sText = str_replace(' ', '-', $sText); // Replaces all spaces with hyphens.
+        $sText = preg_replace('/[^A-Za-z0-9\-öäüÖÄÜß \/]/', '', $sText);
+        return $sText; // Removes special chars.
     }
     
     /**
